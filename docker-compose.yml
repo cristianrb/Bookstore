@@ -1,26 +1,72 @@
-version: '3.3'
+version: '3'
+ 
+#
+# [ server stack ]
+#
+# - cassandra
+# - cassandra-load-keyspace
+# - db (mysql)
+#
 services:
-  db:
-    platform: linux/x86_64
-    image: mysql:5.7
-    restart: always
-    environment:
-      MYSQL_DATABASE: 'db'
-      # So you don't have to use root, but you can if you like
-      MYSQL_USER: 'user'
-      # You can use whatever password you like
-      MYSQL_PASSWORD: 'password'
-      # Password for root access
-      MYSQL_ROOT_PASSWORD: 'password'
-    ports:
-      # <Port exposed> : < MySQL Port running inside container>
-      - '3306:3306'
-    expose:
-      # Opens port 3306 on the container
-      - '3306'
-      # Where our data will be persisted
-    volumes:
-      - my-db:/var/lib/mysql
-# Names our volume
+    cassandra:
+        image: cassandra:3.11.2
+        container_name: cassandra
+        ports:
+          - "19042:9042"
+        environment:
+          - "MAX_HEAP_SIZE=256M"
+          - "HEAP_NEWSIZE=128M"
+        restart: always
+        networks:
+            - backend
+        volumes:
+          - ${PWD}/out/cassandra_data:/var/lib/cassandra
+        healthcheck:
+          test: ["CMD", "cqlsh", "-u cassandra", "-p cassandra" ,"-e describe keyspaces"]
+          interval: 20s
+          timeout: 10s
+          retries: 10
+ 
+    cassandra-load-keyspace:
+        container_name: cassandra-load-keyspace
+        image: cassandra:3.11.2
+        depends_on:
+            - cassandra
+        networks:
+            - backend
+        volumes:
+            - ${PWD}/scripts/cassandra_schema.cql:/schema.cql
+        command: /bin/bash -c "sleep 60 && echo [book_shop_oauth]Loading cassandra keyspace... && cqlsh cassandra -f /schema.cql"
+    mysql-db:
+      platform: linux/x86_64
+      container_name: bookstore-mysql-db
+      image: mysql:5.7
+      restart: always
+      environment:
+        MYSQL_DATABASE: 'db'
+        # So you don't have to use root, but you can if you like
+        MYSQL_USER: 'user'
+        # You can use whatever password you like
+        MYSQL_PASSWORD: 'password'
+        # Password for root access
+        MYSQL_ROOT_PASSWORD: 'password'
+      ports:
+        # <Port exposed> : < MySQL Port running inside container>
+        - '3306:3306'
+      expose:
+        # Opens port 3306 on the container
+        - '3306'
+        # Where our data will be persisted
+      volumes:
+        - mysql-db:/var/lib/mysql
+
+# [ volumes definition ]
 volumes:
-  my-db:
+  mysql-db:
+ 
+# [ networks definition ]
+networks:
+    frontend:
+        driver: bridge
+    backend:
+        driver: bridge
