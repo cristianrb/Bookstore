@@ -1,6 +1,7 @@
 package db
 
 import (
+	"cristianrb/src/clients/cassandra"
 	"cristianrb/src/domain/access_token"
 	"cristianrb/src/utils/errors"
 )
@@ -17,5 +18,11 @@ func NewRepository() DbRepository {
 }
 
 func (d *dbRepository) GetById(id string) (*access_token.AccessToken, *errors.RestErr) {
+	session, err := cassandra.GetSession()
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
 	return nil, errors.NewInternalServerError("database connection not implemented yet")
 }
