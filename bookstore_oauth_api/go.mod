@@ -2,17 +2,21 @@ module cristianrb
 
 go 1.18
 
-require github.com/stretchr/testify v1.8.0
+require (
+	github.com/gin-gonic/gin v1.8.1
+	github.com/go-resty/resty/v2 v2.7.0
+	github.com/gocql/gocql v1.2.1
+	github.com/mercadolibre/golang-restclient v0.0.0-20170701022150-51958130a0a0
+	github.com/stretchr/testify v1.8.0
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/gin-gonic/gin v1.8.1 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.11.1 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
-	github.com/gocql/gocql v1.2.1 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/json-iterator/go v1.1.12 // indirect

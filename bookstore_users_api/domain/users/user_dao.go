@@ -6,13 +6,15 @@ import (
 	"cristianrb/utils/errors"
 	"cristianrb/utils/mysql_utils"
 	"fmt"
+	"strings"
 )
 
 const queryInsertUser = "INSERT INTO users(first_name, last_name, email, date_created, status, password) VALUES (?, ?, ?, ?, ?, ?);"
 const queryGetUser = "SELECT id, first_name, last_name, email, date_created, status FROM users WHERE id = ?;"
 const queryUpdateUser = "UPDATE users SET first_name=?, last_name=?, email=? WHERE id=?;"
 const queryDeleteUser = "DELETE FROM users WHERE id=?;"
-const queryFindUserByStatus = "SELECT id, first_name, last_name, email, date_created FROM users WHERE status=?;"
+const queryFindUserByStatus = "SELECT id, first_name, last_name, email, date_created, status FROM users WHERE status=?;"
+const queryFindByEmailAndPassword = "SELECT id, first_name, last_name, email, date_created, status FROM users WHERE email=? AND password=? AND status=?;"
 
 func (user *User) Get() *errors.RestErr {
 	statement, err := users_db.Client.Prepare(queryGetUser)
@@ -117,4 +119,24 @@ func (user *User) FindByStatus(status string) ([]User, *errors.RestErr) {
 		return nil, errors.NewNotFoundError(fmt.Sprintf("no users matching status %s", status))
 	}
 	return results, nil
+}
+
+func (user *User) FindByEmailAndPassword() *errors.RestErr {
+	statement, err := users_db.Client.Prepare(queryFindByEmailAndPassword)
+	if err != nil {
+		logger.Error("error when trying to prepare find by email and password statement", err)
+		return mysql_utils.ParseError(err)
+	}
+	defer statement.Close()
+
+	result := statement.QueryRow(user.Email, user.Password, StatusActive)
+	if err := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated, &user.Status); err != nil {
+		if strings.Contains(err.Error(), mysql_utils.ErrorNoRows) {
+			return errors.NewNotFoundError("no user found with given credentials")
+		}
+		logger.Error("error when trying to get user by email and password", err)
+		return mysql_utils.ParseError(err)
+	}
+
+	return nil
 }
